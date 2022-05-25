@@ -48,6 +48,14 @@ const run = async () => {
             res.send({ success: "true", Data: products })
         })
 
+        app.get('/products/:id', async (req, res) => {
+            const productId = req.params.id
+
+            const product = await productCollection.findOne({ _id: ObjectId(productId) })
+            res.send({ success: "true", Data: product })
+
+        })
+
 
 
     } catch (error) {
