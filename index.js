@@ -136,6 +136,12 @@ const run = async () => {
 
         })
 
+        app.get('/users', async (req, res) => {
+
+            const users = await userCollection.find({}).toArray()
+            res.send({ success: "true", Data: users })
+        })
+
         app.post('/users', async (req, res) => {
             const newUser = req.body.user
 
@@ -148,6 +154,19 @@ const run = async () => {
                 const user = await userCollection.insertOne(newUser)
                 res.send({ success: "true", Data: user })
             }
+        })
+        app.put('/makeAdmin/:id', async (req, res) => {
+
+            const userId = req.params.id;
+            const filter = { _id: ObjectId(userId) }
+            const option = { upsert: false }
+            const updatedInfo = {
+                $set: {
+                    role: "admin"
+                }
+            }
+            const result = await userCollection.updateOne(filter, updatedInfo, option)
+            res.send({ success: "Success", Data: result })
         })
 
         app.get('/users/:email', async (req, res) => {
