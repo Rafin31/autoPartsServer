@@ -70,6 +70,35 @@ const run = async () => {
             }
 
         })
+        app.delete('/products/:id', async (req, res) => {
+
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const product = await productCollection.deleteOne(query);
+            res.send({ success: "true", Data: id })
+        })
+
+        app.put('/delivered/:id', async (req, res) => {
+
+            const productId = req.params.id;
+            const filter = { _id: ObjectId(productId) }
+            const option = { upsert: false }
+            const updatedInfo = {
+                $set: {
+                    paymentStatus: "shipped"
+                }
+            }
+            const result = await orderCollection.updateOne(filter, updatedInfo, option)
+            res.send({ success: "Success", Data: result })
+
+        })
+
+        app.get('/orders', async (req, res) => {
+
+            const orders = await orderCollection.find({}).toArray()
+            res.send({ success: "true", Data: orders })
+
+        })
 
         app.get('/order', async (req, res) => {
 
