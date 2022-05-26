@@ -18,6 +18,7 @@ app.use(express.json());
 
 const productCollection = client.db("ChaosAutoParts").collection("products");
 const orderCollection = client.db("ChaosAutoParts").collection("orders");
+const reviewCollection = client.db("ChaosAutoParts").collection("reviews");
 
 
 
@@ -86,6 +87,14 @@ const run = async () => {
 
             const order = await orderCollection.insertOne(newOrder)
             res.send({ success: "true", Data: order })
+
+        })
+
+        app.post('/review', async (req, res) => {
+            const newReview = req.body.review
+
+            const review = await reviewCollection.insertOne(newReview)
+            res.send({ success: "true", Data: review })
 
         })
 
