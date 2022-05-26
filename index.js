@@ -19,6 +19,7 @@ app.use(express.json());
 const productCollection = client.db("ChaosAutoParts").collection("products");
 const orderCollection = client.db("ChaosAutoParts").collection("orders");
 const reviewCollection = client.db("ChaosAutoParts").collection("reviews");
+const userCollection = client.db("ChaosAutoParts").collection("users");
 
 
 
@@ -50,6 +51,13 @@ const run = async () => {
             res.send({ success: "true", Data: products })
         })
 
+        app.post('/products', async (req, res) => {
+
+            const product = req.body.product
+            const products = await productCollection.insertOne(product)
+            res.send({ success: "true", Data: products })
+        })
+
         app.get('/products/:id', async (req, res) => {
             const productId = req.params.id
 
@@ -72,6 +80,14 @@ const run = async () => {
 
         })
 
+        app.post('/order', async (req, res) => {
+            const newOrder = req.body.order
+
+            const order = await orderCollection.insertOne(newOrder)
+            res.send({ success: "true", Data: order })
+
+        })
+
         app.delete('/order/:id', async (req, res) => {
 
             const id = req.params.id;
@@ -82,13 +98,6 @@ const run = async () => {
         })
 
 
-        app.post('/order', async (req, res) => {
-            const newOrder = req.body.order
-
-            const order = await orderCollection.insertOne(newOrder)
-            res.send({ success: "true", Data: order })
-
-        })
 
         app.post('/review', async (req, res) => {
             const newReview = req.body.review
@@ -97,6 +106,48 @@ const run = async () => {
             res.send({ success: "true", Data: review })
 
         })
+
+        app.post('/users', async (req, res) => {
+            const newUser = req.body.user
+
+            const query = { email: newUser.email }
+            const isUser = await userCollection.findOne(query)
+
+            if (isUser) {
+                res.send({ success: "true", res: "user already exist" })
+            } else {
+                const user = await userCollection.insertOne(newUser)
+                res.send({ success: "true", Data: user })
+            }
+        })
+
+        app.get('/users/:email', async (req, res) => {
+
+            const email = req.params.email;
+            const query = { email: email }
+            const user = await userCollection.find(query).toArray()
+            res.send({ success: "true", Data: user })
+
+        })
+        app.put('/users/:email', async (req, res) => {
+
+            const userEmail = req.params.email;
+            const user = req.body.data
+            const filter = { email: userEmail }
+            const option = { upsert: false }
+            const updatedInfo = {
+                $set: {
+                    phoneNumber: user.number,
+                    address: user.address,
+                    linkdinLink: user.linkdin,
+                }
+            }
+            const result = await userCollection.updateOne(filter, updatedInfo, option)
+            res.send({ success: "Success", Data: result })
+
+        })
+
+
 
 
 
