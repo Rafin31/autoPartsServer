@@ -45,20 +45,26 @@ function jwtTokenVerify(req, res, next) {
 const run = async () => {
     try {
 
-        app.get('/products', async (req, res) => {
+        app.post("/login", async (req, res) => {
+            const email = req.body.email;
+            const accessToken = jwt.sign({ email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+            res.send({ accessToken });
+        })
+
+        app.get('/products', jwtTokenVerify, async (req, res) => {
 
             const products = await productCollection.find({}).toArray()
             res.send({ success: "true", Data: products })
         })
 
-        app.post('/products', async (req, res) => {
+        app.post('/products', jwtTokenVerify, async (req, res) => {
 
             const product = req.body.product
             const products = await productCollection.insertOne(product)
             res.send({ success: "true", Data: products })
         })
 
-        app.get('/products/:id', async (req, res) => {
+        app.get('/products/:id', jwtTokenVerify, async (req, res) => {
             const productId = req.params.id
 
             console.log(productId);
@@ -70,7 +76,7 @@ const run = async () => {
             }
 
         })
-        app.delete('/products/:id', async (req, res) => {
+        app.delete('/products/:id', jwtTokenVerify, async (req, res) => {
 
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
@@ -78,7 +84,7 @@ const run = async () => {
             res.send({ success: "true", Data: id })
         })
 
-        app.put('/delivered/:id', async (req, res) => {
+        app.put('/delivered/:id', jwtTokenVerify, async (req, res) => {
 
             const productId = req.params.id;
             const filter = { _id: ObjectId(productId) }
@@ -93,14 +99,14 @@ const run = async () => {
 
         })
 
-        app.get('/orders', async (req, res) => {
+        app.get('/orders', jwtTokenVerify, async (req, res) => {
 
             const orders = await orderCollection.find({}).toArray()
             res.send({ success: "true", Data: orders })
 
         })
 
-        app.get('/order', async (req, res) => {
+        app.get('/order', jwtTokenVerify, async (req, res) => {
 
             const userEmail = req.query.email;
             const query = { email: userEmail }
@@ -108,8 +114,16 @@ const run = async () => {
             res.send({ success: "true", Data: orders })
 
         })
+        app.get('/order/:id', jwtTokenVerify, async (req, res) => {
 
-        app.post('/order', async (req, res) => {
+            const orderID = req.params.id;
+            const query = { _id: ObjectId(orderID) }
+            const order = await orderCollection.findOne(query)
+            res.send({ success: "true", Data: order })
+
+        })
+
+        app.post('/order', jwtTokenVerify, async (req, res) => {
             const newOrder = req.body.order
 
             const order = await orderCollection.insertOne(newOrder)
@@ -117,7 +131,7 @@ const run = async () => {
 
         })
 
-        app.delete('/order/:id', async (req, res) => {
+        app.delete('/order/:id', jwtTokenVerify, async (req, res) => {
 
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
@@ -128,7 +142,7 @@ const run = async () => {
 
 
 
-        app.post('/review', async (req, res) => {
+        app.post('/review', jwtTokenVerify, async (req, res) => {
             const newReview = req.body.review
 
             const review = await reviewCollection.insertOne(newReview)
@@ -136,13 +150,20 @@ const run = async () => {
 
         })
 
-        app.get('/users', async (req, res) => {
+        app.get('/review', jwtTokenVerify, async (req, res) => {
+
+            const review = await reviewCollection.find({}).toArray()
+            res.send({ success: "true", Data: review })
+
+        })
+
+        app.get('/users', jwtTokenVerify, async (req, res) => {
 
             const users = await userCollection.find({}).toArray()
             res.send({ success: "true", Data: users })
         })
 
-        app.post('/users', async (req, res) => {
+        app.post('/users', jwtTokenVerify, async (req, res) => {
             const newUser = req.body.user
 
             const query = { email: newUser.email }
@@ -155,7 +176,7 @@ const run = async () => {
                 res.send({ success: "true", Data: user })
             }
         })
-        app.put('/makeAdmin/:id', async (req, res) => {
+        app.put('/makeAdmin/:id', jwtTokenVerify, async (req, res) => {
 
             const userId = req.params.id;
             const filter = { _id: ObjectId(userId) }
@@ -169,7 +190,7 @@ const run = async () => {
             res.send({ success: "Success", Data: result })
         })
 
-        app.get('/users/:email', async (req, res) => {
+        app.get('/users/:email', jwtTokenVerify, async (req, res) => {
 
             const email = req.params.email;
             const query = { email: email }
@@ -177,7 +198,7 @@ const run = async () => {
             res.send({ success: "true", Data: user })
 
         })
-        app.put('/users/:email', async (req, res) => {
+        app.put('/users/:email', jwtTokenVerify, async (req, res) => {
 
             const userEmail = req.params.email;
             const user = req.body.data
