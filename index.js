@@ -17,6 +17,7 @@ app.use(express.json());
 
 
 const productCollection = client.db("ChaosAutoParts").collection("products");
+const orderCollection = client.db("ChaosAutoParts").collection("orders");
 
 
 
@@ -51,8 +52,20 @@ const run = async () => {
         app.get('/products/:id', async (req, res) => {
             const productId = req.params.id
 
+            console.log(productId);
             const product = await productCollection.findOne({ _id: ObjectId(productId) })
-            res.send({ success: "true", Data: product })
+            if (product) {
+                res.send({ success: "true", Data: product })
+            } else {
+                res.send({ success: "Failed" })
+            }
+
+        })
+        app.post('/order', async (req, res) => {
+            const newOrder = req.body.order
+
+            const order = await orderCollection.insertOne(newOrder)
+            res.send({ success: "true", Data: order })
 
         })
 
