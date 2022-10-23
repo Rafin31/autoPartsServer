@@ -5,6 +5,8 @@ require('dotenv').config()
 const client = require('./Db/MongoDb')
 const jwt = require('jsonwebtoken');
 
+const stripe = require('stripe')(process.env.STRIPE_CLIENT_SECRET);
+
 const port = process.env.PORT || 5000;
 
 
@@ -40,8 +42,6 @@ function jwtTokenVerify(req, res, next) {
     })
 }
 
-
-
 const run = async () => {
     try {
 
@@ -51,7 +51,7 @@ const run = async () => {
             res.send({ accessToken });
         })
 
-        app.get('/products', jwtTokenVerify, async (req, res) => {
+        app.get('/products', async (req, res) => {
 
             const products = await productCollection.find({}).toArray()
             res.send({ success: "true", Data: products })
@@ -64,10 +64,9 @@ const run = async () => {
             res.send({ success: "true", Data: products })
         })
 
-        app.get('/products/:id', jwtTokenVerify, async (req, res) => {
+        app.get('/products/:id', async (req, res) => {
             const productId = req.params.id
 
-            console.log(productId);
             const product = await productCollection.findOne({ _id: ObjectId(productId) })
             if (product) {
                 res.send({ success: "true", Data: product })
@@ -140,6 +139,35 @@ const run = async () => {
 
         })
 
+        app.put('/order/:id', jwtTokenVerify, async (req, res) => {
+            const orderID = req.params.id;
+            const { transactionID } = req.body;
+            const filter = { _id: ObjectId(orderID) }
+            const option = { upsert: false }
+            const updatedInfo = {
+                $set: {
+                    transactionID: transactionID,
+                    paymentStatus: "paid"
+                }
+            }
+            const result = await orderCollection.updateOne(filter, updatedInfo, option)
+            res.send({ success: "Success", Data: result })
+        })
+
+
+        app.post('/create-payment-intent', jwtTokenVerify, async (req, res) => {
+
+            const { totalPrice } = req.body;
+            const totalPriceInCents = totalPrice
+            const paymentAmount = totalPriceInCents * 100
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: paymentAmount,
+                currency: "usd",
+                payment_method_types: ["card"]
+            });
+            res.send({ success: "true", clientSecret: paymentIntent.client_secret });
+
+        })
 
 
         app.post('/review', jwtTokenVerify, async (req, res) => {
@@ -150,7 +178,7 @@ const run = async () => {
 
         })
 
-        app.get('/review', jwtTokenVerify, async (req, res) => {
+        app.get('/review', async (req, res) => {
 
             const review = await reviewCollection.find({}).toArray()
             res.send({ success: "true", Data: review })
@@ -163,7 +191,7 @@ const run = async () => {
             res.send({ success: "true", Data: users })
         })
 
-        app.post('/users', jwtTokenVerify, async (req, res) => {
+        app.post('/users', async (req, res) => {
             const newUser = req.body.user
 
             const query = { email: newUser.email }
